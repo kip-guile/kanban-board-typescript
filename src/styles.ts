@@ -3,7 +3,7 @@ import styled from 'styled-components'
 export const AppContainer = styled.div`
   align-items: flex-start;
   background-color: #292d3e;
-  color: #bfc7d5;
+  color: #292d3e;
   display: flex;
   flex-direction: row;
   height: 100%;
