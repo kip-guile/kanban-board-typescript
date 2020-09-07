@@ -1,12 +1,6 @@
 import React, { createContext, useReducer, useContext } from 'react'
-
-const AppStateContext = createContext<AppStateContextProps>(
-  {} as AppStateContextProps
-)
-
-interface AppStateContextProps {
-  state: AppState
-}
+import { v4 as uuidv4 } from 'uuid'
+import { findItemIndexById } from './utils/findItemIndexById'
 
 const appData: AppState = {
   lists: [
@@ -28,6 +22,15 @@ const appData: AppState = {
   ],
 }
 
+const AppStateContext = createContext<AppStateContextProps>(
+  {} as AppStateContextProps
+)
+
+interface AppStateContextProps {
+  state: AppState
+  dispatch: React.Dispatch<Action>
+}
+
 interface Task {
   id: string
   text: string
@@ -43,9 +46,41 @@ export interface AppState {
   lists: List[]
 }
 
+const appStateReducer = (state: AppState, action: Action): AppState => {
+  switch (action.type) {
+    case 'ADD_LIST': {
+      return {
+        ...state,
+        lists: [
+          ...state.lists,
+          { id: uuidv4(), text: action.payload, tasks: [] },
+        ],
+      }
+    }
+    case 'ADD_TASK': {
+      const targetLaneIndex = findItemIndexById(
+        state.lists,
+        action.payload.taskId
+      )
+      state.lists[targetLaneIndex].tasks.push({
+        id: uuidv4(),
+        text: action.payload.text,
+      })
+      return {
+        ...state,
+      }
+    }
+    default: {
+      return state
+    }
+  }
+}
+
 export const AppStateProvider = ({ children }: React.PropsWithChildren<{}>) => {
+  const [state, dispatch] = useReducer(appStateReducer, appData)
+
   return (
-    <AppStateContext.Provider value={{ state: appData }}>
+    <AppStateContext.Provider value={{ state, dispatch }}>
       {children}
     </AppStateContext.Provider>
   )
@@ -54,3 +89,13 @@ export const AppStateProvider = ({ children }: React.PropsWithChildren<{}>) => {
 export const useAppState = () => {
   return useContext(AppStateContext)
 }
+
+type Action =
+  | {
+      type: 'ADD_LIST'
+      payload: string
+    }
+  | {
+      type: 'ADD_TASK'
+      payload: { text: string; taskId: string }
+    }
